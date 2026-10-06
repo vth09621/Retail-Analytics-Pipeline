@@ -1,0 +1,63 @@
+version: 2
+
+models:
+
+  - name: stg_sales_summary
+    columns:
+      - name: order_date
+        tests:
+          - not_null
+
+  - name: stg_product_performance
+    columns:
+      - name: product_id
+        tests:
+          - not_null
+
+  - name: stg_customer_sales
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+
+  - name: stg_store_performance
+    columns:
+      - name: store_id
+        tests:
+          - not_null
+
+  - name: stg_category_performance
+    columns:
+      - name: category_id
+        tests:
+          - not_null
+
+  - name: fct_sales_summary
+    columns:
+      - name: order_date
+        tests:
+          - not_null
+
+  - name: fct_product_performance
+    columns:
+      - name: product_id
+        tests:
+          - not_null
+
+  - name: fct_customer_sales
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+
+  - name: fct_store_performance
+    columns:
+      - name: store_id
+        tests:
+          - not_null
+
+  - name: fct_category_performance
+    columns:
+      - name: category_id
+        tests:
+          - not_null

@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+airflow-venv/
+
+# Environment / secrets
+.env
+.env.*
+
+# macOS
+.DS_Store
+
+# Generated data
+data/
+logs/
+
+# DuckDB
+*.duckdb
+*.duckdb.wal
+*.duckdb.tmp
+
+# dbt generated files
+**/target/
+**/dbt_packages/
+
+# Airflow local/runtime files
+airflow.cfg
+airflow.db
+webserver_config.py
+
+# IDE
+.vscode/
+
+# Project archives / old experiments
+_project_backup/
