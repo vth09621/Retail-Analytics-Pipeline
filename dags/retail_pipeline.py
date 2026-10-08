@@ -1,10 +1,11 @@
+from pathlib import Path
 from datetime import datetime, timedelta
 
 from airflow import DAG
-from airflow.operators.bash import BashOperator
+from airflow.providers.standard.operators.bash import BashOperator
 
 
-PROJECT_DIR = "/Users/avinashsingh/retail-data-engineering"
+PROJECT_DIR = str(Path(__file__).resolve().parent.parent)
 PYTHON = f"{PROJECT_DIR}/.venv/bin/python"
 DBT = f"{PROJECT_DIR}/.venv/bin/dbt"
 
@@ -42,6 +43,14 @@ with DAG(
         ),
     )
 
+    data_quality = BashOperator(
+        task_id="data_quality",
+        bash_command=(
+            f"cd {PROJECT_DIR} && "
+            f"{PYTHON} pyspark/data_quality.py"
+        ),
+    )
+
     silver_to_gold = BashOperator(
         task_id="silver_to_gold",
         bash_command=(
@@ -67,4 +76,4 @@ with DAG(
     )
 
 
-    raw_to_bronze >> bronze_to_silver >> silver_to_gold >> gold_to_duckdb >> dbt_build
+    raw_to_bronze >> bronze_to_silver >> data_quality >> silver_to_gold >> gold_to_duckdb >> dbt_build

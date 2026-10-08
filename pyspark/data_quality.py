@@ -1,30 +1,82 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import col
 
+
 spark = (
     SparkSession.builder
     .appName("RetailDataQuality")
+    .config(
+        "spark.jars.packages",
+        "org.apache.hadoop:hadoop-aws:3.5.0"
+    )
+    .config(
+        "fs.s3a.aws.credentials.provider",
+        "software.amazon.awssdk.auth.credentials.ProfileCredentialsProvider"
+    )
+    .config(
+        "fs.s3a.endpoint.region",
+        "ap-south-1"
+    )
     .getOrCreate()
 )
 
-# Read Silver order_items
-df = spark.read.parquet("data/processed/order_items")
 
-# Find invalid quantities
-invalid_qty = df.filter(col("qty") <= 0)
-
-print("Invalid quantity rows:", invalid_qty.count())
+SILVER_PATH = "s3a://retailanalyticss/silver"
 
 
-# Check invalid product prices
-products = spark.read.parquet("data/processed/products")
+def read_table(table_name):
+    return spark.read.parquet(f"{SILVER_PATH}/{table_name}")
+
+
+print("\n" + "=" * 60)
+print("RETAIL DATA QUALITY CHECKS")
+print("=" * 60)
+
+
+# --------------------------------------------------
+# Load Silver tables
+# --------------------------------------------------
+
+order_items = read_table("order_items")
+products = read_table("products")
+customers = read_table("customers")
+orders = read_table("orders")
+stores = read_table("stores")
+categories = read_table("categories")
+suppliers = read_table("suppliers")
+promotions = read_table("promotions")
+shipments = read_table("shipments")
+payments = read_table("payments")
+returns = read_table("returns")
+
+
+# --------------------------------------------------
+# CHECK 1: Order item quantities
+# --------------------------------------------------
+
+invalid_qty = order_items.filter(col("qty") <= 0)
+
+print(
+    "Invalid quantity rows:",
+    invalid_qty.count()
+)
+
+
+# --------------------------------------------------
+# CHECK 2: Product prices
+# --------------------------------------------------
 
 invalid_price = products.filter(col("price") <= 0)
 
-# Check whether every order item refers to a valid product
+print(
+    "Invalid price rows:",
+    invalid_price.count()
+)
 
-products = spark.read.parquet("data/processed/products")
-order_items = spark.read.parquet("data/processed/order_items")
+
+# --------------------------------------------------
+# CHECK 3: Order items -> Products
+# --------------------------------------------------
 
 invalid_products = (
     order_items
@@ -35,15 +87,15 @@ invalid_products = (
     )
 )
 
-print("Order items with invalid product_id:", invalid_products.count())
+print(
+    "Order items with invalid product_id:",
+    invalid_products.count()
+)
 
-print("Invalid price rows:", invalid_price.count())
 
-
-# Check whether every order refers to a valid customer
-
-customers = spark.read.parquet("data/processed/customers")
-orders = spark.read.parquet("data/processed/orders")
+# --------------------------------------------------
+# CHECK 4: Orders -> Customers
+# --------------------------------------------------
 
 invalid_customers = (
     orders
@@ -54,11 +106,15 @@ invalid_customers = (
     )
 )
 
-print("Orders with invalid customer_id:", invalid_customers.count())
+print(
+    "Orders with invalid customer_id:",
+    invalid_customers.count()
+)
 
-# Check whether every order refers to a valid store
 
-stores = spark.read.parquet("data/processed/stores")
+# --------------------------------------------------
+# CHECK 5: Orders -> Stores
+# --------------------------------------------------
 
 invalid_stores = (
     orders
@@ -69,13 +125,15 @@ invalid_stores = (
     )
 )
 
-print("Orders with invalid store_id:", invalid_stores.count())
+print(
+    "Orders with invalid store_id:",
+    invalid_stores.count()
+)
+
 
 # --------------------------------------------------
 # CHECK 6: Products -> Categories
 # --------------------------------------------------
-
-categories = spark.read.parquet("data/processed/categories")
 
 invalid_categories = (
     products
@@ -96,8 +154,6 @@ print(
 # CHECK 7: Products -> Suppliers
 # --------------------------------------------------
 
-suppliers = spark.read.parquet("data/processed/suppliers")
-
 invalid_suppliers = (
     products
     .join(
@@ -116,8 +172,6 @@ print(
 # --------------------------------------------------
 # CHECK 8: Orders -> Promotions
 # --------------------------------------------------
-
-promotions = spark.read.parquet("data/processed/promotions")
 
 invalid_promotions = (
     orders
@@ -139,8 +193,6 @@ print(
 # CHECK 9: Shipments -> Orders
 # --------------------------------------------------
 
-shipments = spark.read.parquet("data/processed/shipments")
-
 invalid_shipments = (
     shipments
     .join(
@@ -159,8 +211,6 @@ print(
 # --------------------------------------------------
 # CHECK 10: Payments -> Orders
 # --------------------------------------------------
-
-payments = spark.read.parquet("data/processed/payments")
 
 invalid_payments = (
     payments
@@ -181,8 +231,6 @@ print(
 # CHECK 11: Returns -> Order Items
 # --------------------------------------------------
 
-returns = spark.read.parquet("data/processed/returns")
-
 invalid_returns = (
     returns
     .join(
@@ -199,3 +247,8 @@ print(
 
 
 spark.stop()
+
+
+print("\n" + "=" * 60)
+print("DATA QUALITY CHECKS COMPLETED")
+print("=" * 60)
